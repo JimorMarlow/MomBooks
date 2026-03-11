@@ -8,6 +8,7 @@ update_books_index.py - Скрипт для сканирования книг и
 """
 
 import os
+import re
 import sys
 import urllib.parse
 from datetime import datetime, timedelta
@@ -26,6 +27,16 @@ NEW_BOOKS_DAYS = 14  # Период для "новых" книг (2 недели
 def ensure_dirs():
     """Убедиться, что необходимые папки существуют."""
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def natural_sort_key(text: str) -> list:
+    """
+    Ключ для естественной сортировки.
+    "Книга 2" < "Книга 10" (в отличие от лексикографической)
+    Разбивает строку на части: текст и числа.
+    """
+    parts = re.split(r'(\d+)', text.lower())
+    return [int(p) if p.isdigit() else p for p in parts]
 
 
 def get_epub_metadata(epub_path: Path) -> dict:
@@ -220,6 +231,7 @@ def scan_books() -> dict:
             "url_path": url_path,
             "cover_url": f"images/{urllib.parse.quote(cover_filename)}",
             "file_modified": datetime.fromtimestamp(epub_path.stat().st_mtime),
+            "sort_key": natural_sort_key(epub_path.stem),
         }
         
         # Определяем папку
@@ -262,12 +274,18 @@ def generate_html(data: dict) -> str:
             </div>
         </div>
         '''
-    
-    def books_row(books: list) -> str:
+
+    def books_row(books: list, sort_by_title: bool = True) -> str:
         """HTML ряд книг."""
         if not books:
             return ""
-        cards = "\n".join(book_card(b) for b in sorted(books, key=lambda x: x["title"]))
+        if sort_by_title:
+            # Сортировка по ключу (естественная, для серий)
+            sorted_books = sorted(books, key=lambda x: x["sort_key"])
+        else:
+            # Без сортировки (для секции "Новое" - порядок по дате)
+            sorted_books = books
+        cards = "\n".join(book_card(b) for b in sorted_books)
         return f'<div class="books-row">\n{cards}\n</div>'
     
     # Сортируем папки по алфавиту
@@ -276,7 +294,7 @@ def generate_html(data: dict) -> str:
     # Генерируем секцию "Новое"
     new_section = ""
     if data["new"]:
-        new_books_html = books_row(data["new"])
+        new_books_html = books_row(data["new"], sort_by_title=False)
         new_section = f'''
         <section class="section new-books">
             <h2>🆕 Новое</h2>
