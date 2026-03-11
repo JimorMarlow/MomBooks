@@ -350,12 +350,14 @@ def generate_html(data: dict) -> str:
             flex-wrap: wrap;
             gap: 20px;
             justify-content: flex-start;
+            margin: -10px;
         }}
         .book-card {{
             background: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
             overflow: hidden;
             width: 160px;
+            margin: 10px;
             transition: transform 0.2s, box-shadow 0.2s;
         }}
         .book-card:hover {{
