@@ -244,6 +244,28 @@ def scan_books() -> dict:
             if folder_name not in folders:
                 folders[folder_name] = []
             folders[folder_name].append(book_info)
+
+    # Добавляем номера серий в папках (после сбора всех книг)
+    for folder_name, books in folders.items():
+        # Сортируем книги по sort_key
+        sorted_books = sorted(books, key=lambda x: x["sort_key"])
+        total = len(sorted_books)
+        for i, book in enumerate(sorted_books, 1):
+            # Если в папке больше 1 книги, добавляем номер серии
+            if total > 1:
+                book["series_num"] = f"{i}/{total}"
+            else:
+                book["series_num"] = None
+
+    # Для корневых книг тоже (если их > 1)
+    if len(root) > 1:
+        sorted_root = sorted(root, key=lambda x: x["sort_key"])
+        total = len(sorted_root)
+        for i, book in enumerate(sorted_root, 1):
+            book["series_num"] = f"{i}/{total}"
+    else:
+        for book in root:
+            book["series_num"] = None
         
         # Проверяем на "новизну"
         if book_info["file_modified"] > cutoff_date:
@@ -262,6 +284,18 @@ def generate_html(data: dict) -> str:
     def book_card(book: dict) -> str:
         """HTML карточки книги."""
         title_escaped = book["title"].replace('"', "&quot;")
+        series_num = book.get("series_num")
+        year = book.get("year")
+        
+        # Формируем строку с метаданными: номер серии слева, год справа
+        meta_parts = []
+        if series_num:
+            meta_parts.append(f'<span class="book-series">{series_num}</span>')
+        if year:
+            meta_parts.append(f'<span class="book-year">{year}</span>')
+        
+        meta_html = f'<div class="book-meta">{"".join(meta_parts)}</div>' if meta_parts else ""
+        
         return f'''
         <div class="book-card">
             <a href="{book["url_path"]}">
@@ -270,7 +304,7 @@ def generate_html(data: dict) -> str:
             <div class="book-info">
                 <div class="book-author">{book["author"]}</div>
                 <div class="book-title" title="{title_escaped}">{book["title"]}</div>
-                {f'<div class="book-year">{book["year"]}</div>' if book["year"] else ""}
+                {meta_html}
             </div>
         </div>
         '''
@@ -407,10 +441,17 @@ def generate_html(data: dict) -> str:
             -webkit-box-orient: vertical;
             min-height: 40px;
         }}
-        .book-year {{
+        .book-meta {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-size: 12px;
             color: #888;
             margin-top: 6px;
+        }}
+        .book-series {{
+            font-weight: 600;
+            color: #ffd700;
         }}
         .book-card a {{
             text-decoration: none;
