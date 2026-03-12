@@ -202,8 +202,9 @@ def scan_books() -> dict:
             continue
         
         # Путь для URL (forward slashes + URL encoding для кириллицы и пробелов)
-        url_path = "/".join(urllib.parse.quote(part) for part in rel_path.parts)
-        
+        # Добавляем "books/" так как index.html в hfs/, а книги в hfs/books/
+        url_path = "books/" + "/".join(urllib.parse.quote(part) for part in rel_path.parts)
+
         # Имя обложки (совпадает с именем epub, но .jpg)
         cover_filename = epub_path.stem + ".jpg"
         cover_path = IMAGES_DIR / cover_filename
