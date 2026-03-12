@@ -104,3 +104,32 @@ python update_books_index.py
 **Изменённые файлы:**
 - `update_books_index.py` — добавлено поле `series_num`, обновлён CSS и HTML-шаблон
 - `hfs/index.html` — перегенерирован с номерами серий
+
+### 2026-03-12 (Запуск сервера через Python)
+**Проблема:** HFS (Http File Server) не требовался, нужно простое решение на Python
+
+**Решение:**
+- Создан `start_server.py` — HTTP-сервер с Basic Auth на стандартной библиотеке Python
+- Создан `start_books_server.bat` — пакетный файл для запуска сервера в Windows
+- Сервер отдаёт:
+  - `/` → `index.html`
+  - `/books/...` → книги из `hfs/books/`
+  - `/images/...` → обложки из `hfs/images/`
+- Авторизация: логин `books`, пароль `3011`
+- Запуск в отдельном окне (чтобы не блокировать консоль)
+
+**Исправления:**
+- `update_books_index.py` — добавлен префикс `books/` к URL книг (так как index.html в `hfs/`, а книги в `hfs/books/`)
+- `start_books_server.bat` — английские сообщения (проблемы с кодировкой кириллицы в cmd)
+- `start_server.py` — обработка 404 без кириллицы (избегаем UnicodeEncodeError)
+
+**Документация:**
+- `README.md` — обновлено: вместо HFS описан запуск через `start_server.py`
+- `docs/mombooks.md` — обновлено ТЗ: вместо HFS описан Python-сервер
+
+**Изменённые файлы:**
+- `start_server.py` — создан
+- `start_books_server.bat` — создан
+- `update_books_index.py` — исправлены пути к книгам
+- `README.md` — обновлена документация
+- `docs/mombooks.md` — обновлено ТЗ
